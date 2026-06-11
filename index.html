@@ -1,0 +1,2155 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mapa Base - Mapbox</title>
+    <link
+      href="https://api.mapbox.com/mapbox-gl-js/v3.11.0/mapbox-gl.css"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: light;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .app-shell {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .left-panel {
+        width: 340px;
+        min-width: 340px;
+        height: 100%;
+        background: #f6f6f8;
+        border-right: 1px solid #d8d8de;
+        transition: width 180ms ease, min-width 180ms ease;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .left-panel.collapsed {
+        width: 0;
+        min-width: 0;
+        border-right: 0;
+      }
+
+      .left-panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 14px;
+        border-bottom: 1px solid #dfdfe5;
+        background: #f0f0f3;
+        font: 600 14px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      .left-panel-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+
+      .left-panel.collapsed .left-panel-header,
+      .left-panel.collapsed .left-panel-body {
+        display: none;
+      }
+
+      .map-stage {
+        position: relative;
+        flex: 1;
+        height: 100%;
+      }
+
+      #map {
+        width: 100%;
+        height: 100%;
+      }
+
+      .icon-btn {
+        border: 1px solid #d0d0d5;
+        background: rgba(255, 255, 255, 0.96);
+        border-radius: 8px;
+        width: 36px;
+        height: 36px;
+        cursor: pointer;
+        font: 600 16px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #222;
+      }
+
+      .top-search {
+        position: absolute;
+        top: 12px;
+        left: 14px;
+        z-index: 4;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      #left-panel-open {
+        display: none;
+      }
+
+      .search-wrap {
+        width: min(520px, calc(100vw - 420px));
+        min-width: 280px;
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid #d8d8de;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+        height: 38px;
+      }
+
+      .search-wrap input {
+        border: 0;
+        outline: 0;
+        width: 100%;
+        font: 14px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: transparent;
+      }
+
+      .right-tools {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        z-index: 6;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .asset-image {
+        display: block;
+        width: 42px;
+        height: auto;
+        user-select: none;
+      }
+
+      .north-star {
+        width: 28px;
+      }
+
+      .asset-btn {
+        border: 0;
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        cursor: pointer;
+        width: 42px;
+        height: 42px;
+      }
+
+      .asset-btn img {
+        width: 42px;
+        height: 42px;
+        display: block;
+      }
+
+      .asset-btn-glyph {
+        position: relative;
+      }
+
+      .asset-btn-glyph span {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        font: 700 20px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #2f333d;
+        pointer-events: none;
+      }
+
+      .toolbox-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        align-items: center;
+      }
+
+      .toolbox-panel.hidden {
+        display: none;
+      }
+
+      .operational-asset-marker {
+        width: 26px;
+        height: 26px;
+        display: block;
+        user-select: none;
+        pointer-events: auto;
+        cursor: pointer;
+      }
+
+      .zoom-group {
+        position: relative;
+        width: 42px;
+        height: 94px;
+      }
+
+      .zoom-group img {
+        width: 42px;
+        height: 94px;
+        display: block;
+      }
+
+      .zoom-hit {
+        position: absolute;
+        left: 0;
+        width: 42px;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      .zoom-hit-zoom-in {
+        top: 0;
+        height: 47px;
+      }
+
+      .zoom-hit-zoom-out {
+        top: 47px;
+        height: 47px;
+      }
+
+      .map-legend {
+        position: absolute;
+        right: 16px;
+        bottom: 20px;
+        z-index: 4;
+        min-width: 190px;
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid #d9d9d9;
+        border-radius: 10px;
+        padding: 10px 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        font: 13px/1.3 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      .map-legend h4 {
+        margin: 0 0 8px;
+        font: 600 13px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      .zoom-slider {
+        position: absolute;
+        left: 50%;
+        bottom: 14px;
+        transform: translateX(-50%);
+        z-index: 4;
+        width: min(560px, calc(100vw - 420px));
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid #d9d9d9;
+        border-radius: 999px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font: 12px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      .zoom-slider input[type="range"] {
+        flex: 1;
+      }
+
+      .zoom-value {
+        min-width: 62px;
+        text-align: right;
+        font-weight: 600;
+      }
+
+      .button-group {
+        display: flex;
+        width: 100%;
+        margin: 6px 0 8px;
+        border: 1px solid #c8c8c8;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #fff;
+      }
+
+      .button-group button {
+        flex: 1;
+        border: 0;
+        background: transparent;
+        padding: 6px 8px;
+        cursor: pointer;
+        font: inherit;
+      }
+
+      .button-group button + button {
+        border-left: 1px solid #d7d7d7;
+      }
+
+      .button-group button.active {
+        background: #1f6feb;
+        color: #fff;
+        font-weight: 600;
+      }
+
+      .panel-tabs {
+        display: flex;
+        gap: 8px;
+        padding: 12px 12px 0;
+      }
+
+      .panel-tab {
+        border: 1px solid #cfd3db;
+        border-bottom: 0;
+        border-radius: 8px 8px 0 0;
+        background: #e8eaf0;
+        color: #333844;
+        font: 600 13px/1.1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      .panel-tab.active {
+        background: #ffffff;
+      }
+
+      .panel-tab-content {
+        flex: 1;
+        border-top: 1px solid #d8dce6;
+        background: #ffffff;
+        padding: 12px;
+        overflow: auto;
+      }
+
+      .panel-pane.hidden {
+        display: none;
+      }
+
+      .layers-group {
+        border: 1px solid #e2e5ec;
+        border-radius: 10px;
+        background: #fbfcff;
+        padding: 10px;
+        margin-bottom: 10px;
+      }
+
+      .layers-group h3 {
+        margin: 0 0 8px;
+        font: 600 13px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #2b2f3a;
+      }
+
+      .panel-label {
+        display: block;
+        margin-bottom: 6px;
+        font: 600 12px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #4a5160;
+      }
+
+      .panel-select {
+        width: 100%;
+        border: 1px solid #cfd4df;
+        border-radius: 8px;
+        background: #fff;
+        padding: 8px 10px;
+        font: 500 13px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      .layer-toggle-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .layer-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font: 500 13px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #2f3340;
+      }
+
+      .legend {
+        margin-top: 8px;
+        border-top: 1px solid #e6e6e6;
+        padding-top: 8px;
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 4px 0;
+      }
+
+      .swatch {
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+        border: 1px solid rgba(0, 0, 0, 0.35);
+        box-sizing: border-box;
+      }
+
+      .status {
+        margin-top: 8px;
+        color: #4d4d4d;
+      }
+
+      .locator-modal {
+        position: absolute;
+        left: 12px;
+        bottom: 64px;
+        z-index: 4;
+        width: 260px;
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid #d9d9d9;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+        font: 12px/1.3 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      .locator-modal.hidden {
+        display: none;
+      }
+
+      .locator-header {
+        padding: 6px 8px;
+        border-bottom: 1px solid #ececec;
+        font-weight: 600;
+      }
+
+      .hydro-color-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin-top: 4px;
+      }
+
+      .hydro-layer-row {
+        display: grid;
+        gap: 6px;
+      }
+
+      .hydro-layer-top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .hydro-layer-top input[type="checkbox"] {
+        width: 17px;
+        height: 17px;
+      }
+
+      .hydro-layer-controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .hydro-layer-name {
+        font: 600 14px/1.1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #2f333d;
+      }
+
+      .hydro-control {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        color: #4a4f59;
+        min-width: 0;
+        border: 1px solid #d8d8de;
+        border-radius: 8px;
+        background: #f7f7f9;
+        padding: 4px 6px;
+      }
+
+      .hydro-control span {
+        font: 600 12px/1.1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        white-space: nowrap;
+      }
+
+      .hydro-control input[type="color"] {
+        width: 30px;
+        height: 22px;
+        border: 1px solid #d8d8de;
+        border-radius: 4px;
+        background: #fff;
+        padding: 0;
+      }
+
+      @media (max-width: 760px) {
+        .hydro-layer-controls {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      #locator-map {
+        width: 100%;
+        height: 160px;
+      }
+
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside id="left-panel" class="left-panel">
+        <div class="left-panel-header">
+          <span>Panel</span>
+          <button id="left-panel-toggle" class="icon-btn" type="button" title="Colapsar panel">‹</button>
+        </div>
+        <div class="left-panel-body">
+          <div class="panel-tabs">
+            <button class="panel-tab active" type="button" data-tab-target="layers">Layers</button>
+          </div>
+          <div class="panel-tab-content">
+            <section class="panel-pane" data-tab-panel="layers">
+              <div class="layers-group">
+                <h3>Mapa base</h3>
+                <label class="panel-label" for="basemap-select">Estilo del mapa</label>
+                <select id="basemap-select" class="panel-select">
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                  <option value="outdoors">Outdoors</option>
+                  <option value="topographic-relief">Topographic + Relief</option>
+                  <option value="satellite">Satellite</option>
+                  <option value="minimalist">Minimalist</option>
+                  <option value="high-contrast">High contrast</option>
+                </select>
+              </div>
+
+              <div class="layers-group">
+                <h3>Proyección</h3>
+                <div class="button-group" id="projection-group">
+                  <button type="button" data-projection="globe" id="projection-globe">Globo</button>
+                  <button type="button" data-projection="mercator" id="projection-2d">2D</button>
+                </div>
+              </div>
+
+              <div class="layers-group">
+                <h3>HydroBASINS</h3>
+                <div class="hydro-color-grid">
+                  <div class="hydro-layer-row">
+                    <label class="hydro-layer-top" for="toggle05">
+                      <input type="checkbox" id="toggle05" checked />
+                      <span class="hydro-layer-name">Hydrobasin 5</span>
+                    </label>
+                    <div class="hydro-layer-controls">
+                      <label class="hydro-control" for="hbl5-fill-color">
+                        <span>Background</span>
+                        <input type="color" id="hbl5-fill-color" value="#d1495b" />
+                      </label>
+                      <label class="hydro-control" for="hbl5-line-color">
+                        <span>Stroke</span>
+                        <input type="color" id="hbl5-line-color" value="#8c1c13" />
+                      </label>
+                    </div>
+                  </div>
+                  <div class="hydro-layer-row">
+                    <label class="hydro-layer-top" for="toggle07">
+                      <input type="checkbox" id="toggle07" />
+                      <span class="hydro-layer-name">Hydrobasin 7</span>
+                    </label>
+                    <div class="hydro-layer-controls">
+                      <label class="hydro-control" for="hbl7-fill-color">
+                        <span>Background</span>
+                        <input type="color" id="hbl7-fill-color" value="#2a9d8f" />
+                      </label>
+                      <label class="hydro-control" for="hbl7-line-color">
+                        <span>Stroke</span>
+                        <input type="color" id="hbl7-line-color" value="#1d4e89" />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="status" class="status">Cargando capas...</div>
+            </section>
+          </div>
+        </div>
+      </aside>
+
+      <main class="map-stage">
+        <div id="map"></div>
+
+        <div class="top-search">
+          <button id="left-panel-open" class="icon-btn" type="button" title="Abrir panel">☰</button>
+          <div class="search-wrap">
+            <input id="search-input" type="text" placeholder="Search anything, even coordinates..." />
+            <span>⌕</span>
+          </div>
+        </div>
+
+        <div class="right-tools">
+          <img class="asset-image north-star" src="./assets/North star.svg" alt="North star" />
+          <button id="toolbox-primary" class="asset-btn" type="button" title="Layers">
+            <img src="./assets/Tiles.svg" alt="Toolbox" />
+          </button>
+          <div id="toolbox-panel" class="toolbox-panel">
+            <button id="tool-layers" class="asset-btn asset-btn-glyph" type="button" title="Layers">
+              <img src="./assets/Button.svg" alt="Layers" />
+              <span>≡</span>
+            </button>
+            <button id="tool-pin" class="asset-btn" type="button" title="Pin temporal">
+              <img src="./assets/temporarypinButton.svg" alt="Pin temporal" />
+            </button>
+            <button id="tool-download-image" class="asset-btn" type="button" title="Descargar imagen">
+              <img src="./assets/downloadimageButton.svg" alt="Descargar imagen" />
+            </button>
+            <button id="tool-download-data" class="asset-btn" type="button" title="Descargar datos">
+              <img src="./assets/downloaddataButton.svg" alt="Descargar datos" />
+            </button>
+            <button id="tool-crosshair" class="asset-btn" type="button" title="Ir a mi ubicación">
+              <img src="./assets/crosshairButton.svg" alt="Ubicación actual" />
+            </button>
+            <button id="tool-search" class="asset-btn asset-btn-glyph" type="button" title="Buscar">
+              <img src="./assets/Button.svg" alt="Buscar" />
+              <span>⌕</span>
+            </button>
+            <button id="tool-expand-view" class="asset-btn" type="button" title="Pantalla completa">
+              <img src="./assets/expandviewButton.svg" alt="Pantalla completa" />
+            </button>
+            <div class="zoom-group">
+              <img src="./assets/zoominandoutButton group.svg" alt="Zoom in y out" />
+              <button
+                id="tool-zoom-in"
+                class="zoom-hit zoom-hit-zoom-in"
+                type="button"
+                title="Zoom +"
+              ></button>
+              <button
+                id="tool-zoom-out"
+                class="zoom-hit zoom-hit-zoom-out"
+                type="button"
+                title="Zoom -"
+              ></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="map-legend">
+          <h4>Leyenda</h4>
+          <div class="legend-item">
+            <span id="swatch05" class="swatch"></span>
+            <span>HBL5</span>
+          </div>
+          <div class="legend-item">
+            <span id="swatch07" class="swatch"></span>
+            <span>HBL7</span>
+          </div>
+        </div>
+
+        <div id="locator-modal" class="locator-modal hidden">
+          <div class="locator-header">Referencia global (mapamundi)</div>
+          <div id="locator-map"></div>
+        </div>
+
+        <div class="zoom-slider">
+          <span>Zoom</span>
+          <input id="zoom-slider" type="range" min="0" max="22" step="0.1" value="8.6" />
+          <span id="zoom-value" class="zoom-value">10.0x</span>
+          <span id="mouse-position" class="zoom-value" style="min-width: 150px">0.000000, 0.000000</span>
+        </div>
+
+      </main>
+    </div>
+
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.11.0/mapbox-gl.js"></script>
+    <script>
+      mapboxgl.accessToken =
+        "pk.eyJ1Ijoibmljb2N1bm4iLCJhIjoiY2pmbHBmb2lqMDR4dDMzbzRkbW12bXowbCJ9.eibF-eDR_xQyMFq8oyZ82Q";
+
+      const BASEMAP_STYLES = {
+        light: "mapbox://styles/mapbox/light-v11",
+        dark: "mapbox://styles/mapbox/dark-v11",
+        outdoors: "mapbox://styles/mapbox/outdoors-v12",
+        "topographic-relief": "mapbox://styles/mapbox/outdoors-v12",
+        satellite: "mapbox://styles/mapbox/satellite-v9",
+        minimalist: "mapbox://styles/mapbox/streets-v12",
+        "high-contrast": "mapbox://styles/mapbox/navigation-night-v1"
+      };
+
+      let activeBasemap = "light";
+      let userPreferredBasemap = "light";
+      let activeProjection = "globe";
+      const LOCATOR_TRIGGER_ZOOM = 7.0;
+      const SATELLITE_TRIGGER_ZOOM = 13.5;
+      const HYDROBASIN_LEVEL7_TRIGGER_ZOOM = 8.5;
+      const HYDROBASIN_SOURCE_LAYER = "hydrobasins";
+      const HYDROBASIN_COMBINED_SOURCE_ID = "hydrobasins-vt";
+      const HYDROBASIN_SPLIT_SOURCE_IDS = { 5: "hydrobasins-hbl5-vt", 7: "hydrobasins-hbl7-vt" };
+      const HYDROBASIN_COMBINED_TILE_VERSION = "20260306b";
+      const HYDROBASIN_SPLIT_TILE_VERSION = "20260428split1";
+      const OPERATIONAL_ASSETS_TRIGGER_ZOOM = 8.6;
+      let autoSatelliteApplied = false;
+      let hydroHiddenForSatellite = false;
+      let hydroSkipAutoOnce = false;
+      let hydroToggleSnapshot = {
+        toggle05: true,
+        toggle07: false
+      };
+
+      const map = new mapboxgl.Map({
+        container: "map",
+        style: BASEMAP_STYLES[activeBasemap],
+        center: [-58.3816, -34.6037],
+        zoom: 8.6,
+        preserveDrawingBuffer: true
+      });
+
+      map.addControl(new mapboxgl.ScaleControl({ maxWidth: 120, unit: "metric" }), "bottom-left");
+
+      const statusEl = document.getElementById("status");
+      const basemapSelect = document.getElementById("basemap-select");
+      const projectionGroup = document.getElementById("projection-group");
+      const projectionGlobe = document.getElementById("projection-globe");
+      const projection2d = document.getElementById("projection-2d");
+      const toggle05 = document.getElementById("toggle05");
+      const toggle07 = document.getElementById("toggle07");
+      const swatch05 = document.getElementById("swatch05");
+      const swatch07 = document.getElementById("swatch07");
+      const hbl5FillColorInput = document.getElementById("hbl5-fill-color");
+      const hbl5LineColorInput = document.getElementById("hbl5-line-color");
+      const hbl7FillColorInput = document.getElementById("hbl7-fill-color");
+      const hbl7LineColorInput = document.getElementById("hbl7-line-color");
+      const leftPanel = document.getElementById("left-panel");
+      const leftPanelToggle = document.getElementById("left-panel-toggle");
+      const leftPanelOpen = document.getElementById("left-panel-open");
+      const locatorModal = document.getElementById("locator-modal");
+      const zoomSlider = document.getElementById("zoom-slider");
+      const zoomValue = document.getElementById("zoom-value");
+      const mousePosition = document.getElementById("mouse-position");
+      const searchInput = document.getElementById("search-input");
+      const toolboxPrimary = document.getElementById("toolbox-primary");
+      const toolLayers = document.getElementById("tool-layers");
+      const toolZoomIn = document.getElementById("tool-zoom-in");
+      const toolZoomOut = document.getElementById("tool-zoom-out");
+      const toolExpandView = document.getElementById("tool-expand-view");
+      const toolCrosshair = document.getElementById("tool-crosshair");
+      const toolPin = document.getElementById("tool-pin");
+      const toolSearch = document.getElementById("tool-search");
+      const toolDownloadImage = document.getElementById("tool-download-image");
+      const toolDownloadData = document.getElementById("tool-download-data");
+      const panelTabs = document.querySelectorAll(".panel-tab");
+      const panelPanes = document.querySelectorAll(".panel-pane");
+      let locatorMap = null;
+      let locatorMarker = null;
+      let locatorVisible = false;
+      let hoveredFeatureId = null;
+      let hoveredFeatureRef = null;
+      let hydroTilesetMode = "combined";
+      let hydroTilesetModePromise = null;
+      let lastHydroAutoLevel = null;
+      let pendingHoverPoint = null;
+      let hoverFramePending = false;
+      let basinPopup = null;
+      let pinPlacementMode = false;
+      let temporaryPinMarker = null;
+      let siteSymbolsEnabled = true;
+      const operationalAssetMarkers = [];
+      const waterGapCache = new Map();
+      const WATER_GAP_BASE_URL =
+        "https://services3.arcgis.com/AdYB7LvDmN7hzWUb/ArcGIS/rest/services/countries_publish/FeatureServer/0/query";
+      const WATER_GAP_YEAR = 2019;
+
+      const INTERACTIVE_LAYERS = ["hybas05-fill", "hybas07-fill"];
+      const SITE_ICON_BY_RISK = {
+        1: "site-risk-low",
+        2: "site-risk-med-low",
+        3: "site-risk-med",
+        4: "site-risk-med-high",
+        5: "site-risk-high"
+      };
+      const hydroColorOverrides = {
+        hbl5Fill: null,
+        hbl5Line: null,
+        hbl7Fill: null,
+        hbl7Line: null
+      };
+      const OPERATIONAL_ASSET_ICONS = {
+        "oa-withdrawal-generic": "./assets/oa-withdrawal-generic.svg",
+        "oa-withdrawal-groundwater": "./assets/oa-withdrawal-groundwater.svg",
+        "oa-withdrawal-municipal": "./assets/oa-withdrawal-municipal.svg",
+        "oa-withdrawal-rainwater": "./assets/oa-withdrawal-rainwater.svg",
+        "oa-withdrawal-recycled": "./assets/oa-withdrawal-recycled.svg",
+        "oa-withdrawal-surface-water": "./assets/oa-withdrawal-surface-water.svg",
+        "oa-discharge-generic": "./assets/oa-discharge-generic.svg",
+        "oa-discharge-recharge": "./assets/oa-discharge-recharge.svg",
+        "oa-discharge-sewer": "./assets/oa-discharge-sewer.svg",
+        "oa-discharge-surface": "./assets/oa-discharge-surface.svg",
+        "oa-discharge-treatment": "./assets/oa-discharge-treatment.svg"
+      };
+
+      function setStatus(text) {
+        statusEl.textContent = text;
+      }
+
+      function updateZoomUi(zoom) {
+        const z = Number(zoom);
+        if (!Number.isFinite(z)) return;
+        zoomSlider.value = z.toFixed(1);
+        zoomValue.textContent = `${z.toFixed(1)}x`;
+      }
+
+      function setPanelCollapsed(collapsed) {
+        leftPanel.classList.toggle("collapsed", collapsed);
+        leftPanelOpen.style.display = collapsed ? "inline-grid" : "none";
+        window.setTimeout(() => map.resize(), 180);
+      }
+
+      function buildTileAssetUrl(tileRoot = "vectiles", assetPath = "{z}/{x}/{y}.pbf", version = HYDROBASIN_COMBINED_TILE_VERSION) {
+        const { protocol, origin, pathname } = window.location;
+        const basePath = pathname.replace(/\/[^/]*$/, "/");
+        const normalizedRoot = String(tileRoot).replace(/^\/+|\/+$/g, "");
+        const normalizedAsset = String(assetPath).replace(/^\/+/, "");
+        const suffix = version ? `?v=${encodeURIComponent(version)}` : "";
+
+        if (/^https?:$/.test(protocol) && origin && origin !== "null") {
+          return `${origin}${basePath}${normalizedRoot}/${normalizedAsset}${suffix}`;
+        }
+
+        if (protocol === "file:") {
+          return `file://${basePath}${normalizedRoot}/${normalizedAsset}${suffix}`;
+        }
+
+        return null;
+      }
+
+      function buildTileUrlTemplate(tileRoot = "vectiles", version = HYDROBASIN_COMBINED_TILE_VERSION) {
+        return buildTileAssetUrl(tileRoot, "{z}/{x}/{y}.pbf", version);
+      }
+
+      async function splitHydroTilesAreAvailable() {
+        const { protocol } = window.location;
+        if (!/^https?:$/.test(protocol)) return false;
+
+        const checks = [
+          buildTileAssetUrl("vectiles_hbl5", "metadata.json", HYDROBASIN_SPLIT_TILE_VERSION),
+          buildTileAssetUrl("vectiles_hbl7", "metadata.json", HYDROBASIN_SPLIT_TILE_VERSION)
+        ].filter(Boolean);
+
+        if (checks.length !== 2) return false;
+
+        try {
+          const responses = await Promise.all(
+            checks.map((url) => fetch(url, { method: "HEAD", cache: "no-store" }))
+          );
+          return responses.every((response) => response.ok);
+        } catch (error) {
+          return false;
+        }
+      }
+
+      async function getHydroTilesetMode() {
+        if (!hydroTilesetModePromise) {
+          hydroTilesetModePromise = splitHydroTilesAreAvailable().then((hasSplitTiles) => {
+            hydroTilesetMode = hasSplitTiles ? "split" : "combined";
+            return hydroTilesetMode;
+          });
+        }
+        return hydroTilesetModePromise;
+      }
+
+      function getHydroSourceId(level) {
+        return hydroTilesetMode === "split"
+          ? HYDROBASIN_SPLIT_SOURCE_IDS[level]
+          : HYDROBASIN_COMBINED_SOURCE_ID;
+      }
+
+      function getHydroLayerZoomRange(level) {
+        return level === 5
+          ? { maxzoom: HYDROBASIN_LEVEL7_TRIGGER_ZOOM }
+          : { minzoom: HYDROBASIN_LEVEL7_TRIGGER_ZOOM };
+      }
+
+      function getVisibleHydroInteractiveLayers() {
+        return INTERACTIVE_LAYERS.filter((id) => {
+          if (!map.getLayer(id)) return false;
+          return map.getLayoutProperty(id, "visibility") !== "none";
+        });
+      }
+
+      function applyProjection() {
+        if (!map.isStyleLoaded()) return;
+        map.setProjection(activeProjection);
+      }
+
+      function syncProjectionButtons() {
+        projectionGlobe.classList.toggle("active", activeProjection === "globe");
+        projection2d.classList.toggle("active", activeProjection === "mercator");
+      }
+
+      function centerWorldIn2D() {
+        map.fitBounds(
+          [
+            [-179.9, -60],
+            [179.9, 84]
+          ],
+          { padding: 20, duration: 350 }
+        );
+      }
+
+      function placeTemporaryPin(lngLat) {
+        if (temporaryPinMarker) {
+          temporaryPinMarker.remove();
+        }
+        temporaryPinMarker = new mapboxgl.Marker({ color: "#d90429" }).setLngLat(lngLat).addTo(map);
+      }
+
+      function downloadBlob(content, filename, mimeType) {
+        const blob = new Blob([content], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.append(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+      }
+
+      function resolveAssetUrl(relativePath) {
+        return new URL(relativePath, window.location.href).href;
+      }
+
+      async function addMapImage(imageId, srcUrl) {
+        if (map.hasImage(imageId)) return;
+        const resolvedUrl = resolveAssetUrl(srcUrl);
+        let imageBitmap = null;
+        try {
+          const response = await fetch(resolvedUrl, { cache: "no-store" });
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+          const blob = await response.blob();
+          imageBitmap = await createImageBitmap(blob);
+        } catch (fetchError) {
+          imageBitmap = await new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => resolve(img);
+            img.onerror = () => reject(new Error(`No se pudo cargar icono: ${resolvedUrl}`));
+            img.src = resolvedUrl;
+          });
+        }
+        const normalizedSize = 48;
+        const canvas = document.createElement("canvas");
+        canvas.width = normalizedSize;
+        canvas.height = normalizedSize;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("No se pudo crear canvas para normalizar iconos.");
+        ctx.clearRect(0, 0, normalizedSize, normalizedSize);
+        ctx.drawImage(imageBitmap, 0, 0, normalizedSize, normalizedSize);
+        map.addImage(imageId, canvas, { pixelRatio: 2 });
+      }
+
+      async function ensureSiteRiskImages() {
+        await Promise.all([
+          addMapImage(SITE_ICON_BY_RISK[5], "./assets/site high risk.svg"),
+          addMapImage(SITE_ICON_BY_RISK[4], "./assets/site med high risk.svg"),
+          addMapImage(SITE_ICON_BY_RISK[3], "./assets/site med risk.svg"),
+          addMapImage(SITE_ICON_BY_RISK[2], "./assets/site med low risk.png"),
+          addMapImage(SITE_ICON_BY_RISK[1], "./assets/site low risk.svg")
+        ]);
+      }
+
+      function setActivePanelTab(target) {
+        panelTabs.forEach((tab) => {
+          tab.classList.toggle("active", tab.dataset.tabTarget === target);
+        });
+        panelPanes.forEach((pane) => {
+          pane.classList.toggle("hidden", pane.dataset.tabPanel !== target);
+        });
+      }
+
+      function normalizeHex(hex, fallback = "#000000") {
+        if (!hex || typeof hex !== "string") return fallback;
+        const value = hex.trim();
+        if (/^#[0-9a-fA-F]{6}$/.test(value)) return value.toLowerCase();
+        if (/^#[0-9a-fA-F]{3}$/.test(value)) {
+          return (
+            "#" +
+            value
+              .slice(1)
+              .split("")
+              .map((char) => `${char}${char}`)
+              .join("")
+              .toLowerCase()
+          );
+        }
+        return fallback;
+      }
+
+      function hexToRgb(hex) {
+        const value = normalizeHex(hex);
+        return {
+          r: Number.parseInt(value.slice(1, 3), 16),
+          g: Number.parseInt(value.slice(3, 5), 16),
+          b: Number.parseInt(value.slice(5, 7), 16)
+        };
+      }
+
+      function rgbToHex({ r, g, b }) {
+        const toHex = (n) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, "0");
+        return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+      }
+
+      function mixHex(base, target, amount) {
+        const clamped = Math.max(0, Math.min(1, amount));
+        const a = hexToRgb(base);
+        const b = hexToRgb(target);
+        return rgbToHex({
+          r: a.r + (b.r - a.r) * clamped,
+          g: a.g + (b.g - a.g) * clamped,
+          b: a.b + (b.b - a.b) * clamped
+        });
+      }
+
+      function luminance(hex) {
+        const { r, g, b } = hexToRgb(hex);
+        const channel = (c) => {
+          const v = c / 255;
+          return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+        };
+        return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+      }
+
+      function inferHoverColors(fillHex, lineHex) {
+        const fill = normalizeHex(fillHex, "#6b7280");
+        const line = normalizeHex(lineHex, "#1f2937");
+        const isLight = luminance(fill) >= 0.58;
+        const hoverFill = isLight ? mixHex(fill, "#000000", 0.24) : mixHex(fill, "#ffffff", 0.33);
+        const hoverLine = isLight ? mixHex(line, "#000000", 0.45) : mixHex(line, "#ffffff", 0.55);
+        return { hoverFill, hoverLine };
+      }
+
+      function getDefaultHydroColors() {
+        const highContrastBase =
+          activeBasemap === "dark" ||
+          activeBasemap === "satellite" ||
+          activeBasemap === "high-contrast";
+
+        if (highContrastBase) {
+          return {
+            hbl5Fill: "#ffb703",
+            hbl5Line: "#fb8500",
+            hbl7Fill: "#00d4ff",
+            hbl7Line: "#0077b6"
+          };
+        }
+
+        return {
+          hbl5Fill: "#d1495b",
+          hbl5Line: "#8c1c13",
+          hbl7Fill: "#2a9d8f",
+          hbl7Line: "#1d4e89"
+        };
+      }
+
+      function getHydroColors() {
+        const defaults = getDefaultHydroColors();
+        const hbl5Fill = normalizeHex(hydroColorOverrides.hbl5Fill || defaults.hbl5Fill, defaults.hbl5Fill);
+        const hbl5Line = normalizeHex(hydroColorOverrides.hbl5Line || defaults.hbl5Line, defaults.hbl5Line);
+        const hbl7Fill = normalizeHex(hydroColorOverrides.hbl7Fill || defaults.hbl7Fill, defaults.hbl7Fill);
+        const hbl7Line = normalizeHex(hydroColorOverrides.hbl7Line || defaults.hbl7Line, defaults.hbl7Line);
+        const h5Hover = inferHoverColors(hbl5Fill, hbl5Line);
+        const h7Hover = inferHoverColors(hbl7Fill, hbl7Line);
+
+        return {
+          hbl5Fill,
+          hbl5Line,
+          hbl7Fill,
+          hbl7Line,
+          hbl5HoverFill: h5Hover.hoverFill,
+          hbl5HoverLine: h5Hover.hoverLine,
+          hbl7HoverFill: h7Hover.hoverFill,
+          hbl7HoverLine: h7Hover.hoverLine
+        };
+      }
+
+      function syncHydroColorInputs() {
+        const colors = getHydroColors();
+        if (hbl5FillColorInput) hbl5FillColorInput.value = colors.hbl5Fill;
+        if (hbl5LineColorInput) hbl5LineColorInput.value = colors.hbl5Line;
+        if (hbl7FillColorInput) hbl7FillColorInput.value = colors.hbl7Fill;
+        if (hbl7LineColorInput) hbl7LineColorInput.value = colors.hbl7Line;
+      }
+
+      function setHydroColorOverride(key, value) {
+        hydroColorOverrides[key] = normalizeHex(value, hydroColorOverrides[key] || "#000000");
+        if (map.isStyleLoaded()) {
+          applyHydroPaint();
+        } else {
+          paintLegend();
+        }
+      }
+
+      function paintLegend() {
+        const colors = getHydroColors();
+        swatch05.style.backgroundColor = colors.hbl5Fill;
+        swatch05.style.borderColor = colors.hbl5Line;
+        swatch07.style.backgroundColor = colors.hbl7Fill;
+        swatch07.style.borderColor = colors.hbl7Line;
+      }
+
+      function addHydroLevelLayer({ level, fillId, lineId, minzoom, maxzoom }) {
+        const filter = ["==", ["get", "level"], level];
+        const colors = getHydroColors();
+        const fill = level === 5 ? colors.hbl5Fill : colors.hbl7Fill;
+        const line = level === 5 ? colors.hbl5Line : colors.hbl7Line;
+        const hoverFill = level === 5 ? colors.hbl5HoverFill : colors.hbl7HoverFill;
+        const hoverLine = level === 5 ? colors.hbl5HoverLine : colors.hbl7HoverLine;
+        const sourceId = getHydroSourceId(level);
+        const zoomRange = {
+          ...getHydroLayerZoomRange(level),
+          ...(Number.isFinite(minzoom) ? { minzoom } : {}),
+          ...(Number.isFinite(maxzoom) ? { maxzoom } : {})
+        };
+
+        map.addLayer({
+          id: fillId,
+          type: "fill",
+          source: sourceId,
+          "source-layer": HYDROBASIN_SOURCE_LAYER,
+          ...zoomRange,
+          filter,
+          paint: {
+            "fill-color": [
+              "case",
+              ["boolean", ["feature-state", "hover"], false],
+              hoverFill,
+              fill
+            ],
+            "fill-opacity": [
+              "case",
+              ["boolean", ["feature-state", "hover"], false],
+              0.45,
+              0.2
+            ]
+          }
+        });
+
+        map.addLayer({
+          id: lineId,
+          type: "line",
+          source: sourceId,
+          "source-layer": HYDROBASIN_SOURCE_LAYER,
+          ...zoomRange,
+          filter,
+          paint: {
+            "line-color": [
+              "case",
+              ["boolean", ["feature-state", "hover"], false],
+              hoverLine,
+              line
+            ],
+            "line-width": [
+              "case",
+              ["boolean", ["feature-state", "hover"], false],
+              1.0,
+              0.35
+            ],
+            "line-opacity": 0.95
+          }
+        });
+      }
+
+      function setHoveredFeature(feature) {
+        const nextId = feature && feature.id !== undefined ? feature.id : null;
+        const nextSourceId =
+          nextId !== null
+            ? feature.source || getHydroSourceId(Number(feature.properties?.level))
+            : null;
+        const nextRef = nextId !== null && nextSourceId ? { source: nextSourceId, id: nextId } : null;
+        const isSameFeature =
+          hoveredFeatureRef &&
+          nextRef &&
+          hoveredFeatureRef.source === nextRef.source &&
+          hoveredFeatureRef.id === nextRef.id;
+
+        if (hoveredFeatureRef && !isSameFeature && map.getSource(hoveredFeatureRef.source)) {
+          map.setFeatureState(
+            {
+              source: hoveredFeatureRef.source,
+              sourceLayer: HYDROBASIN_SOURCE_LAYER,
+              id: hoveredFeatureRef.id
+            },
+            { hover: false }
+          );
+        }
+
+        if (nextRef && !isSameFeature && map.getSource(nextRef.source)) {
+          map.setFeatureState(
+            { source: nextRef.source, sourceLayer: HYDROBASIN_SOURCE_LAYER, id: nextRef.id },
+            { hover: true }
+          );
+        }
+
+        hoveredFeatureId = nextId;
+        hoveredFeatureRef = nextRef;
+        map.getCanvas().style.cursor = nextId !== null ? "pointer" : "";
+      }
+
+      function clearHoveredFeature() {
+        if (hoveredFeatureRef && map.getSource(hoveredFeatureRef.source)) {
+          map.setFeatureState(
+            {
+              source: hoveredFeatureRef.source,
+              sourceLayer: HYDROBASIN_SOURCE_LAYER,
+              id: hoveredFeatureRef.id
+            },
+            { hover: false }
+          );
+        }
+        hoveredFeatureId = null;
+        hoveredFeatureRef = null;
+        map.getCanvas().style.cursor = "";
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      async function reverseGeocode(lng, lat) {
+        const url =
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json` +
+          `?types=country,place,locality,district&language=es&limit=6&access_token=${mapboxgl.accessToken}`;
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error("No se pudo resolver ubicación");
+        }
+
+        const payload = await response.json();
+        const features = payload.features || [];
+
+        const countryFeature = features.find((f) =>
+          Array.isArray(f.place_type) && f.place_type.includes("country")
+        );
+
+        const cityFeature =
+          features.find((f) => Array.isArray(f.place_type) && f.place_type.includes("place")) ||
+          features.find((f) => Array.isArray(f.place_type) && f.place_type.includes("locality")) ||
+          features.find((f) => Array.isArray(f.place_type) && f.place_type.includes("district"));
+
+        return {
+          country: countryFeature?.text || "N/D",
+          city: cityFeature?.text || "N/D",
+          iso2: countryFeature?.properties?.short_code
+            ? String(countryFeature.properties.short_code).toUpperCase()
+            : null
+        };
+      }
+
+      function parseHistoricalSeries(rawValue, year) {
+        if (!rawValue) return null;
+        const values = String(rawValue)
+          .split("|")
+          .map((v) => Number(v))
+          .filter((v) => Number.isFinite(v));
+        if (!values.length) return null;
+        const startYear = 1980;
+        const index = year - startYear;
+        if (index < 0 || index >= values.length) return null;
+        return values[index];
+      }
+
+      function formatKm3(valueM3) {
+        if (!Number.isFinite(valueM3)) return "N/D";
+        const km3 = valueM3 / 1e9;
+        return `${km3.toLocaleString("es-AR", {
+          minimumFractionDigits: 3,
+          maximumFractionDigits: 3
+        })} km³`;
+      }
+
+      function toSqlString(value) {
+        return String(value).replaceAll("'", "''");
+      }
+
+      async function fetchWaterGapByCountry({ country, iso2, year }) {
+        const cacheKey = `${iso2 || "xx"}|${country || "N/D"}|${year}`;
+        if (waterGapCache.has(cacheKey)) {
+          return waterGapCache.get(cacheKey);
+        }
+
+        const where = iso2
+          ? `ISO = '${toSqlString(iso2)}'`
+          : `COUNTRY = '${toSqlString(country)}'`;
+        const params = new URLSearchParams({
+          f: "json",
+          where,
+          returnGeometry: "false",
+          outFields: "COUNTRY,ISO,total_water_gap_current,gap_historical_total",
+          cacheHint: "true"
+        });
+
+        const response = await fetch(`${WATER_GAP_BASE_URL}?${params.toString()}`);
+        if (!response.ok) {
+          throw new Error("No se pudo consultar Water Gap");
+        }
+
+        const payload = await response.json();
+        const attrs = payload?.features?.[0]?.attributes;
+        if (!attrs) {
+          const empty = { waterGapCurrent: null, waterGapYear: null, countryName: country };
+          waterGapCache.set(cacheKey, empty);
+          return empty;
+        }
+
+        const waterGapCurrent = Number(attrs.total_water_gap_current);
+        const waterGapYear = parseHistoricalSeries(attrs.gap_historical_total, year);
+        const result = {
+          waterGapCurrent: Number.isFinite(waterGapCurrent) ? waterGapCurrent : null,
+          waterGapYear: Number.isFinite(waterGapYear) ? waterGapYear : null,
+          countryName: attrs.COUNTRY || country
+        };
+        waterGapCache.set(cacheKey, result);
+        return result;
+      }
+
+      function getHoveredBasinFeature(point) {
+        const layers = getVisibleHydroInteractiveLayers();
+        if (!layers.length) return null;
+        const features = map.queryRenderedFeatures(point, {
+          layers
+        });
+        return features[0] || null;
+      }
+
+      function processHover() {
+        hoverFramePending = false;
+        if (!pendingHoverPoint) return;
+        const feature = getHoveredBasinFeature(pendingHoverPoint);
+        setHoveredFeature(feature);
+      }
+
+      function bindBasinInteractions() {
+        map.on("mousemove", (event) => {
+          pendingHoverPoint = event.point;
+          if (!hoverFramePending) {
+            hoverFramePending = true;
+            window.requestAnimationFrame(processHover);
+          }
+
+          if (map.getLayer("sites-circle")) {
+            const interactiveLayers = [];
+            if (map.getLayer("sites-circle")) interactiveLayers.push("sites-circle");
+
+            const hit = map.queryRenderedFeatures(event.point, {
+              layers: interactiveLayers
+            });
+            if (hit.length > 0) {
+              map.getCanvas().style.cursor = "pointer";
+            }
+          }
+        });
+
+        map.on("mouseout", () => {
+          pendingHoverPoint = null;
+          clearHoveredFeature();
+        });
+
+        map.on("click", async (event) => {
+          if (pinPlacementMode) {
+            placeTemporaryPin([event.lngLat.lng, event.lngLat.lat]);
+            pinPlacementMode = false;
+            setStatus("Pin temporal colocado.");
+            return;
+          }
+
+          if (map.getLayer("sites-circle")) {
+            const siteFeature = map.queryRenderedFeatures(event.point, {
+              layers: ["sites-circle"]
+            })[0];
+
+            if (siteFeature) {
+              if (basinPopup) {
+                basinPopup.remove();
+              }
+
+              basinPopup = new mapboxgl.Popup({
+                closeButton: true,
+                closeOnClick: true,
+                maxWidth: "320px"
+              })
+                .setLngLat(event.lngLat)
+                .setHTML(buildSitePopupHtml(siteFeature.properties || {}))
+                .addTo(map);
+              return;
+            }
+          }
+
+          const feature = getHoveredBasinFeature(event.point);
+          if (!feature) {
+            return;
+          }
+
+          setHoveredFeature(feature);
+
+          const basinId = feature.properties?.HYBAS_ID ?? "N/D";
+          const level = feature.properties?.level ?? "N/D";
+          const lng = event.lngLat.lng;
+          const lat = event.lngLat.lat;
+
+          if (basinPopup) {
+            basinPopup.remove();
+          }
+
+          basinPopup = new mapboxgl.Popup({
+            closeButton: true,
+            closeOnClick: true,
+            maxWidth: "260px"
+          })
+            .setLngLat([lng, lat])
+            .setHTML("<strong>Cargando información...</strong>")
+            .addTo(map);
+
+          try {
+            const place = await reverseGeocode(lng, lat);
+            let waterGapLine = "Water Gap (2019): N/D";
+            let waterGapCurrentLine = "Water Gap actual: N/D";
+            try {
+              const wg = await fetchWaterGapByCountry({
+                country: place.country,
+                iso2: place.iso2,
+                year: WATER_GAP_YEAR
+              });
+              waterGapLine = `Water Gap (${WATER_GAP_YEAR}): ${formatKm3(wg.waterGapYear)}`;
+              waterGapCurrentLine = `Water Gap actual: ${formatKm3(wg.waterGapCurrent)}`;
+            } catch (waterGapError) {
+              console.warn("Water Gap lookup failed:", waterGapError);
+            }
+
+            basinPopup.setHTML(
+              `<strong>Cuenca seleccionada</strong><br>` +
+                `Pais: ${escapeHtml(place.country)}<br>` +
+                `Ciudad: ${escapeHtml(place.city)}<br>` +
+                `Granularidad: ${escapeHtml(level)}<br>` +
+                `Basin ID: ${escapeHtml(basinId)}<br>` +
+                `${escapeHtml(waterGapLine)}<br>` +
+                `${escapeHtml(waterGapCurrentLine)}`
+            );
+          } catch (error) {
+            basinPopup.setHTML(
+              `<strong>Cuenca seleccionada</strong><br>` +
+              `Pais: N/D<br>` +
+              `Ciudad: N/D<br>` +
+              `Granularidad: ${escapeHtml(level)}<br>` +
+              `Basin ID: ${escapeHtml(basinId)}<br>` +
+              `Water Gap (${WATER_GAP_YEAR}): N/D<br>` +
+              `Water Gap actual: N/D`
+            );
+          }
+        });
+      }
+
+      function applyHydroPaint() {
+        const colors = getHydroColors();
+        if (map.getLayer("hybas05-fill")) {
+          map.setPaintProperty("hybas05-fill", "fill-color", [
+            "case",
+            ["boolean", ["feature-state", "hover"], false],
+            colors.hbl5HoverFill,
+            colors.hbl5Fill
+          ]);
+          map.setPaintProperty("hybas05-line", "line-color", [
+            "case",
+            ["boolean", ["feature-state", "hover"], false],
+            colors.hbl5HoverLine,
+            colors.hbl5Line
+          ]);
+        }
+        if (map.getLayer("hybas07-fill")) {
+          map.setPaintProperty("hybas07-fill", "fill-color", [
+            "case",
+            ["boolean", ["feature-state", "hover"], false],
+            colors.hbl7HoverFill,
+            colors.hbl7Fill
+          ]);
+          map.setPaintProperty("hybas07-line", "line-color", [
+            "case",
+            ["boolean", ["feature-state", "hover"], false],
+            colors.hbl7HoverLine,
+            colors.hbl7Line
+          ]);
+        }
+        paintLegend();
+      }
+
+      function setLayerVisibility(layerId, visible) {
+        if (map.getLayer(layerId)) {
+          map.setLayoutProperty(layerId, "visibility", visible ? "visible" : "none");
+        }
+      }
+
+      function applyVisibilityFromToggles() {
+        setLayerVisibility("hybas05-fill", toggle05.checked);
+        setLayerVisibility("hybas05-line", toggle05.checked);
+        setLayerVisibility("hybas07-fill", toggle07.checked);
+        setLayerVisibility("hybas07-line", toggle07.checked);
+      }
+
+      function hideHydrobasinsForSatellite() {
+        if (!hydroHiddenForSatellite) {
+          hydroToggleSnapshot = {
+            toggle05: Boolean(toggle05.checked),
+            toggle07: Boolean(toggle07.checked)
+          };
+        }
+        hydroHiddenForSatellite = true;
+        lastHydroAutoLevel = null;
+        toggle05.checked = false;
+        toggle07.checked = false;
+        applyVisibilityFromToggles();
+      }
+
+      function restoreHydrobasinsAfterSatellite() {
+        if (!hydroHiddenForSatellite) return;
+        toggle05.checked = Boolean(hydroToggleSnapshot.toggle05);
+        toggle07.checked = Boolean(hydroToggleSnapshot.toggle07);
+        hydroHiddenForSatellite = false;
+        hydroSkipAutoOnce = true;
+        lastHydroAutoLevel = null;
+        applyVisibilityFromToggles();
+      }
+
+      function applyHydrobasinAutoByZoom({ force = false } = {}) {
+        if (activeBasemap === "satellite") {
+          hideHydrobasinsForSatellite();
+          return;
+        }
+        if (hydroSkipAutoOnce) {
+          hydroSkipAutoOnce = false;
+          applyVisibilityFromToggles();
+          return;
+        }
+        const zoom = map.getZoom();
+        const useLevel7 = zoom >= HYDROBASIN_LEVEL7_TRIGGER_ZOOM;
+        const nextAutoLevel = useLevel7 ? 7 : 5;
+        if (
+          !force &&
+          lastHydroAutoLevel === nextAutoLevel &&
+          toggle05.checked === !useLevel7 &&
+          toggle07.checked === useLevel7
+        ) {
+          return;
+        }
+        lastHydroAutoLevel = nextAutoLevel;
+        toggle05.checked = !useLevel7;
+        toggle07.checked = useLevel7;
+        applyVisibilityFromToggles();
+      }
+
+      function addHydroSource(sourceId, tileTemplate) {
+        if (!map.getSource(sourceId)) {
+          map.addSource(sourceId, {
+            type: "vector",
+            tiles: [tileTemplate],
+            promoteId: "HYBAS_ID",
+            minzoom: 0,
+            maxzoom: 8
+          });
+        }
+      }
+
+      async function ensureHydroLayers() {
+        hoveredFeatureId = null;
+        hoveredFeatureRef = null;
+        map.getCanvas().style.cursor = "";
+        const mode = await getHydroTilesetMode();
+        const combinedTileTemplate = buildTileUrlTemplate();
+        if (!combinedTileTemplate) {
+          setStatus("Abrí este archivo por http://localhost (no blob/file).");
+          return;
+        }
+
+        if (mode === "split") {
+          addHydroSource(
+            HYDROBASIN_SPLIT_SOURCE_IDS[5],
+            buildTileUrlTemplate("vectiles_hbl5", HYDROBASIN_SPLIT_TILE_VERSION)
+          );
+          addHydroSource(
+            HYDROBASIN_SPLIT_SOURCE_IDS[7],
+            buildTileUrlTemplate("vectiles_hbl7", HYDROBASIN_SPLIT_TILE_VERSION)
+          );
+        } else {
+          addHydroSource(HYDROBASIN_COMBINED_SOURCE_ID, combinedTileTemplate);
+        }
+
+        if (!map.getLayer("hybas05-fill")) {
+          addHydroLevelLayer({
+            level: 5,
+            fillId: "hybas05-fill",
+            lineId: "hybas05-line",
+            maxzoom: HYDROBASIN_LEVEL7_TRIGGER_ZOOM
+          });
+        }
+
+        if (!map.getLayer("hybas07-fill")) {
+          addHydroLevelLayer({
+            level: 7,
+            fillId: "hybas07-fill",
+            lineId: "hybas07-line",
+            minzoom: HYDROBASIN_LEVEL7_TRIGGER_ZOOM
+          });
+        }
+
+        applyHydroPaint();
+        applyHydrobasinAutoByZoom({ force: true });
+        setStatus(`HydroBASINS cargado (HBL5 y HBL7, tiles ${mode === "split" ? "separados" : "combinados"}).`);
+      }
+
+      function ensureSitesLayer() {
+        if (!map.getSource("sites-source")) {
+          map.addSource("sites-source", {
+            type: "geojson",
+            data: "./data/sites.geojson?v=20260306r4"
+          });
+        }
+
+        if (!map.getLayer("sites-circle")) {
+          if (siteSymbolsEnabled) {
+            map.addLayer({
+              id: "sites-circle",
+              type: "symbol",
+              source: "sites-source",
+              layout: {
+                "icon-image": [
+                  "match",
+                  ["to-number", ["get", "overallRisk"], -1],
+                  1, SITE_ICON_BY_RISK[1],
+                  2, SITE_ICON_BY_RISK[2],
+                  3, SITE_ICON_BY_RISK[3],
+                  4, SITE_ICON_BY_RISK[4],
+                  5, SITE_ICON_BY_RISK[5],
+                  SITE_ICON_BY_RISK[3]
+                ],
+                "icon-allow-overlap": true,
+                "icon-ignore-placement": true,
+                "icon-size": ["interpolate", ["linear"], ["zoom"], 2, 1.05, 8, 1.35, 14, 1.75, 18, 2.0]
+              }
+            });
+            return;
+          }
+
+          map.addLayer({
+            id: "sites-circle",
+            type: "circle",
+            source: "sites-source",
+            paint: {
+              "circle-radius": ["interpolate", ["linear"], ["zoom"], 2, 8.5, 8, 11.5, 14, 15.5, 18, 18.5],
+              "circle-color": [
+                "match",
+                ["to-number", ["get", "overallRisk"], -1],
+                1, "#8FC78F",
+                2, "#A9CEA8",
+                3, "#F4DDB1",
+                4, "#C85246",
+                5, "#8C232D",
+                "#F4DDB1"
+              ],
+              "circle-stroke-color": [
+                "case",
+                [">=", ["to-number", ["get", "overallRisk"], 3], 4],
+                "#FFFFFF",
+                "#1E1E1E"
+              ],
+              "circle-stroke-width": 1.2
+            }
+          });
+        }
+      }
+
+      function ensureOperationalAssetsLayer() {
+        if (!map.getSource("operational-asset-links-source")) {
+          map.addSource("operational-asset-links-source", {
+            type: "geojson",
+            data: "./data/operational_asset_links.geojson?v=20260306r3"
+          });
+        }
+
+        if (!map.getLayer("operational-asset-links")) {
+          map.addLayer(
+            {
+              id: "operational-asset-links",
+              type: "line",
+              source: "operational-asset-links-source",
+              minzoom: OPERATIONAL_ASSETS_TRIGGER_ZOOM,
+              paint: {
+                "line-color": "#6b7280",
+                "line-opacity": 0.7,
+                "line-width": ["interpolate", ["linear"], ["zoom"], 8, 1, 12, 1.35, 16, 1.8],
+                "line-dasharray": [1, 1.2]
+              }
+            },
+            "sites-circle"
+          );
+        }
+      }
+
+      function clearOperationalAssetMarkers() {
+        while (operationalAssetMarkers.length) {
+          const marker = operationalAssetMarkers.pop();
+          marker.remove();
+        }
+      }
+
+      function updateOperationalAssetMarkerVisibility() {
+        const show = map.getZoom() >= OPERATIONAL_ASSETS_TRIGGER_ZOOM;
+        operationalAssetMarkers.forEach((marker) => {
+          marker.getElement().style.display = show ? "block" : "none";
+        });
+      }
+
+      async function ensureOperationalAssetMarkers() {
+        clearOperationalAssetMarkers();
+        const response = await fetch("./data/operational_assets.geojson?v=20260306r3");
+        if (!response.ok) {
+          throw new Error("No se pudo cargar operational_assets.geojson");
+        }
+        const geojson = await response.json();
+        const features = geojson?.features || [];
+
+        for (const feature of features) {
+          const coords = feature?.geometry?.coordinates;
+          if (!Array.isArray(coords) || coords.length < 2) continue;
+
+          const props = feature?.properties || {};
+          const iconPath =
+            OPERATIONAL_ASSET_ICONS[props.iconId] || OPERATIONAL_ASSET_ICONS["oa-withdrawal-generic"];
+          const element = document.createElement("img");
+          element.className = "operational-asset-marker";
+          element.src = resolveAssetUrl(iconPath);
+          element.alt = props.assetType || "Operational asset";
+
+          element.addEventListener("click", (event) => {
+            event.stopPropagation();
+            if (basinPopup) {
+              basinPopup.remove();
+            }
+            basinPopup = new mapboxgl.Popup({
+              closeButton: true,
+              closeOnClick: true,
+              maxWidth: "340px"
+            })
+              .setLngLat(coords)
+              .setHTML(buildOperationalAssetPopupHtml(props))
+              .addTo(map);
+          });
+
+          const marker = new mapboxgl.Marker({
+            element,
+            anchor: "center"
+          })
+            .setLngLat(coords)
+            .addTo(map);
+          operationalAssetMarkers.push(marker);
+        }
+
+        updateOperationalAssetMarkerVisibility();
+      }
+
+      function buildSitePopupHtml(properties) {
+        const safe = (v) => escapeHtml(v ?? "N/D");
+        let operationalAssets = [];
+        try {
+          if (typeof properties.operationalAssetsJson === "string") {
+            operationalAssets = JSON.parse(properties.operationalAssetsJson);
+          } else if (Array.isArray(properties.operationalAssetsJson)) {
+            operationalAssets = properties.operationalAssetsJson;
+          }
+        } catch (error) {
+          operationalAssets = [];
+        }
+
+        const operationalAssetCount = Number(properties.operationalAssetCount) || operationalAssets.length || 0;
+        const operationalAssetsHtml = operationalAssets.length
+          ? (
+              "<br><strong>Operational Assets</strong><br>" +
+              operationalAssets
+                .slice(0, 8)
+                .map((asset) => {
+                  const name = safe(asset?.name);
+                  const assetType = safe(asset?.assetType);
+                  const status = safe(asset?.assetStatus);
+                  return `• ${name} (${assetType} / ${status})`;
+                })
+                .join("<br>") +
+              (operationalAssets.length > 8 ? `<br>+${operationalAssets.length - 8} más` : "")
+            )
+          : "<br><strong>Operational Assets</strong><br>N/D";
+
+        return (
+          `<strong>Sitio</strong><br>` +
+          `Nombre: ${safe(properties.name)}<br>` +
+          `Pais: ${safe(properties.country)}<br>` +
+          `Estado/Provincia: ${safe(properties.state)}<br>` +
+          `Región: ${safe(properties.region)}<br>` +
+          `Business Unit: ${safe(properties.businessUnit)}<br>` +
+          `Commodity: ${safe(properties.commodity)}<br>` +
+          `Supplier: ${safe(properties.supplier)}<br>` +
+          `Facility Type: ${safe(properties.facilityType)}<br>` +
+          `Checked: ${safe(properties.checked)}<br>` +
+          `Is Group: ${safe(properties.isGroup)}<br>` +
+          `Overall Risk: ${safe(properties.overallRisk)}<br>` +
+          `Operational Assets (count): ${safe(operationalAssetCount)}<br>` +
+          `Operational Asset Types: ${safe(properties.operationalAssetTypes)}<br>` +
+          `Hydrobasin5: ${safe(properties.hydrobasin5)}<br>` +
+          `Hydrobasin7: ${safe(properties.hydrobasin7)}` +
+          operationalAssetsHtml
+        );
+      }
+
+      function buildOperationalAssetPopupHtml(properties) {
+        const safe = (v) => escapeHtml(v ?? "N/D");
+        return (
+          `<strong>Operational Asset</strong><br>` +
+          `Nombre: ${safe(properties.name)}<br>` +
+          `Tipo: ${safe(properties.assetType)}<br>` +
+          `Water Source Type: ${safe(properties.waterSourceType)}<br>` +
+          `Water Source Name: ${safe(properties.waterSourceName)}<br>` +
+          `Ownership: ${safe(properties.ownershipType)}<br>` +
+          `Estado: ${safe(properties.assetStatus)}<br>` +
+          `Related Sites: ${safe(properties.relatedSites)}<br>` +
+          `Pais: ${safe(properties.country)}<br>` +
+          `Estado/Provincia: ${safe(properties.state)}`
+        );
+      }
+
+      function applyTopographicRelief() {
+        if (activeBasemap !== "topographic-relief") {
+          return;
+        }
+
+        if (!map.getSource("mapbox-dem")) {
+          map.addSource("mapbox-dem", {
+            type: "raster-dem",
+            url: "mapbox://mapbox.mapbox-terrain-dem-v1",
+            tileSize: 512,
+            maxzoom: 14
+          });
+        }
+
+        map.setTerrain({ source: "mapbox-dem", exaggeration: 1.35 });
+        map.setFog({
+          color: "rgb(220, 230, 240)",
+          "high-color": "rgb(200, 220, 240)",
+          "horizon-blend": 0.12
+        });
+      }
+
+      function applyAutoBasemapByZoom() {
+        const zoom = map.getZoom();
+
+        if (
+          zoom >= SATELLITE_TRIGGER_ZOOM &&
+          userPreferredBasemap !== "satellite" &&
+          activeBasemap !== "satellite"
+        ) {
+          hideHydrobasinsForSatellite();
+          activeBasemap = "satellite";
+          basemapSelect.value = "satellite";
+          autoSatelliteApplied = true;
+          setStatus("Zoom >= 13.5: cambiando a vista satelital.");
+          map.setStyle(BASEMAP_STYLES.satellite);
+          return;
+        }
+
+        if (zoom < SATELLITE_TRIGGER_ZOOM && autoSatelliteApplied) {
+          restoreHydrobasinsAfterSatellite();
+          activeBasemap = userPreferredBasemap || "light";
+          basemapSelect.value = activeBasemap;
+          autoSatelliteApplied = false;
+          setStatus("Zoom < 13.5: restaurando capa base elegida.");
+          map.setStyle(BASEMAP_STYLES[activeBasemap]);
+        }
+      }
+
+      function updateLocatorVisibility() {
+        const show = map.getZoom() >= LOCATOR_TRIGGER_ZOOM;
+        locatorModal.classList.toggle("hidden", !show);
+        if (show && !locatorVisible && locatorMap) {
+          locatorMap.resize();
+          syncLocatorMap();
+        }
+        locatorVisible = show;
+      }
+
+      function syncLocatorMap() {
+        if (!locatorMap || !locatorMap.isStyleLoaded()) return;
+
+        const center = map.getCenter();
+        locatorMap.easeTo({
+          center: [center.lng, center.lat],
+          zoom: 1.8,
+          duration: 0
+        });
+        if (locatorMarker) {
+          locatorMarker.setLngLat([center.lng, center.lat]);
+        }
+      }
+
+      function initLocatorMap() {
+        if (locatorMap) return;
+
+        locatorMap = new mapboxgl.Map({
+          container: "locator-map",
+          style: "mapbox://styles/mapbox/light-v11",
+          center: [0, 15],
+          zoom: 1.8,
+          minZoom: 1.8,
+          maxZoom: 1.8,
+          interactive: false
+        });
+
+        locatorMap.on("load", () => {
+          locatorMarker = new mapboxgl.Marker({
+            color: "#d90429",
+            scale: 0.7
+          })
+            .setLngLat(map.getCenter())
+            .addTo(locatorMap);
+        });
+      }
+
+      map.on("error", (event) => {
+        const message = event?.error?.message || "Error de render en mapa";
+        console.error("Mapbox error:", event?.error || event);
+        setStatus(`Error: ${message}`);
+      });
+
+      map.on("load", () => {
+        initLocatorMap();
+        updateLocatorVisibility();
+        syncLocatorMap();
+        bindBasinInteractions();
+        applyAutoBasemapByZoom();
+      });
+
+      map.on("style.load", async () => {
+        try {
+          setStatus("Aplicando estilo y capas...");
+          syncHydroColorInputs();
+          applyProjection();
+          applyTopographicRelief();
+          await ensureHydroLayers();
+          siteSymbolsEnabled = true;
+          try {
+            await ensureSiteRiskImages();
+          } catch (imageError) {
+            siteSymbolsEnabled = false;
+            console.warn("No se pudieron cargar íconos de sitios. Usando fallback.", imageError);
+            setStatus("Sitios en modo compatibilidad (sin íconos SVG).");
+          }
+          ensureSitesLayer();
+          ensureOperationalAssetsLayer();
+          await ensureOperationalAssetMarkers();
+        } catch (error) {
+          console.error(error);
+          setStatus(`Error: ${error.message}`);
+        }
+      });
+
+      basemapSelect.addEventListener("change", () => {
+        userPreferredBasemap = basemapSelect.value;
+        activeBasemap = userPreferredBasemap;
+        autoSatelliteApplied = false;
+        syncHydroColorInputs();
+        setStatus("Cambiando mapa base...");
+        map.setStyle(BASEMAP_STYLES[activeBasemap]);
+      });
+
+      projectionGroup.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-projection]");
+        if (!button) return;
+        activeProjection = button.dataset.projection;
+        map.setProjection(activeProjection);
+        if (activeProjection === "mercator") {
+          centerWorldIn2D();
+        }
+        syncProjectionButtons();
+      });
+
+      toggle05.addEventListener("change", () => {
+        applyVisibilityFromToggles();
+      });
+
+      toggle07.addEventListener("change", () => {
+        applyVisibilityFromToggles();
+      });
+
+      hbl5FillColorInput?.addEventListener("input", (event) => {
+        setHydroColorOverride("hbl5Fill", event.target.value);
+      });
+      hbl5LineColorInput?.addEventListener("input", (event) => {
+        setHydroColorOverride("hbl5Line", event.target.value);
+      });
+      hbl7FillColorInput?.addEventListener("input", (event) => {
+        setHydroColorOverride("hbl7Fill", event.target.value);
+      });
+      hbl7LineColorInput?.addEventListener("input", (event) => {
+        setHydroColorOverride("hbl7Line", event.target.value);
+      });
+
+      panelTabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          setActivePanelTab(tab.dataset.tabTarget || "layers");
+        });
+      });
+
+      toolboxPrimary.addEventListener("click", () => {
+        setPanelCollapsed(false);
+        setActivePanelTab("layers");
+      });
+
+      toolLayers.addEventListener("click", () => {
+        setPanelCollapsed(false);
+        setActivePanelTab("layers");
+      });
+
+      toolZoomIn.addEventListener("click", () => {
+        map.zoomTo(map.getZoom() + 1, { duration: 180 });
+      });
+
+      toolZoomOut.addEventListener("click", () => {
+        map.zoomTo(map.getZoom() - 1, { duration: 180 });
+      });
+
+      toolExpandView.addEventListener("click", async () => {
+        const stage = document.querySelector(".map-stage");
+        if (!stage) return;
+        try {
+          if (document.fullscreenElement) {
+            await document.exitFullscreen();
+          } else {
+            await stage.requestFullscreen();
+          }
+        } catch (error) {
+          setStatus("No se pudo cambiar a pantalla completa.");
+        }
+      });
+
+      toolCrosshair.addEventListener("click", () => {
+        if (!navigator.geolocation) {
+          setStatus("Geolocalización no disponible en este navegador.");
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const lngLat = [position.coords.longitude, position.coords.latitude];
+            map.flyTo({ center: lngLat, zoom: Math.max(map.getZoom(), 11), duration: 500 });
+            placeTemporaryPin(lngLat);
+            setStatus("Ubicación centrada.");
+          },
+          () => {
+            setStatus("No se pudo obtener tu ubicación.");
+          },
+          { enableHighAccuracy: true, timeout: 7000, maximumAge: 60000 }
+        );
+      });
+
+      toolSearch.addEventListener("click", () => {
+        searchInput?.focus();
+      });
+
+      toolPin.addEventListener("click", () => {
+        pinPlacementMode = !pinPlacementMode;
+        setStatus(pinPlacementMode ? "Modo pin activo: hacé click en el mapa." : "Modo pin desactivado.");
+      });
+
+      toolDownloadImage.addEventListener("click", () => {
+        try {
+          const image = map.getCanvas().toDataURL("image/png");
+          const link = document.createElement("a");
+          link.href = image;
+          link.download = `waterplan-map-${Date.now()}.png`;
+          document.body.append(link);
+          link.click();
+          link.remove();
+          setStatus("Imagen descargada.");
+        } catch (error) {
+          setStatus("No se pudo exportar la imagen del mapa.");
+        }
+      });
+
+      toolDownloadData.addEventListener("click", async () => {
+        try {
+          const response = await fetch("./data/sites.geojson?v=20260306r4");
+          if (!response.ok) throw new Error("fetch failed");
+          const payload = await response.text();
+          downloadBlob(payload, "sites.geojson", "application/geo+json");
+          setStatus("Datos descargados.");
+        } catch (error) {
+          setStatus("No se pudieron descargar los datos.");
+        }
+      });
+
+      map.on("move", () => {
+        updateLocatorVisibility();
+        syncLocatorMap();
+      });
+
+      map.on("mousemove", (event) => {
+        mousePosition.textContent = `${event.lngLat.lat.toFixed(6)}, ${event.lngLat.lng.toFixed(6)}`;
+      });
+
+      map.on("zoom", () => {
+        updateZoomUi(map.getZoom());
+        updateLocatorVisibility();
+        applyHydrobasinAutoByZoom();
+        updateOperationalAssetMarkerVisibility();
+      });
+
+      map.on("zoomend", () => {
+        applyAutoBasemapByZoom();
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") return;
+        if (basinPopup) {
+          basinPopup.remove();
+          basinPopup = null;
+        }
+      });
+
+      zoomSlider.addEventListener("input", () => {
+        const nextZoom = Number(zoomSlider.value);
+        zoomValue.textContent = `${nextZoom.toFixed(1)}x`;
+        map.zoomTo(nextZoom, { duration: 80 });
+      });
+
+      leftPanelToggle.addEventListener("click", () => {
+        setPanelCollapsed(true);
+      });
+
+      leftPanelOpen.addEventListener("click", () => {
+        setPanelCollapsed(false);
+      });
+
+      paintLegend();
+      syncHydroColorInputs();
+      updateZoomUi(map.getZoom());
+      syncProjectionButtons();
+      setPanelCollapsed(false);
+      setActivePanelTab("layers");
+    </script>
+  </body>
+</html>

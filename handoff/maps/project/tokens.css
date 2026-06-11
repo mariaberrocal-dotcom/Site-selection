@@ -1,0 +1,280 @@
+/* =========================================================================
+   Waterplan / Seastem Design System — Tokens
+   Mirror of the production tokens used by the Waterplan platform.
+   Source of truth: waterplan-frontend/src/styles/seastem/*
+   ========================================================================= */
+
+/* Local Inter — variable font with optical-size + weight axes.
+   Browsers automatically pick the best optical-size cut at each font-size
+   when font-optical-sizing: auto is set on body (see below). */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/Inter-VariableFont_opsz_wght.ttf") format("truetype-variations"),
+       url("fonts/Inter-VariableFont_opsz_wght.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/Inter-Italic-VariableFont_opsz_wght.ttf") format("truetype-variations"),
+       url("fonts/Inter-Italic-VariableFont_opsz_wght.ttf") format("truetype");
+}
+
+/* Golos Text — brand display family. Used on marketing surfaces, dashboard
+   hero titles, and large numeric KPIs where extra warmth is desirable.
+   Variable font covers 400–900; static cuts kept as fallback. */
+@font-face {
+  font-family: "Golos Text";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("fonts/GolosText-VariableFont_wght.ttf") format("truetype-variations"),
+       url("fonts/GolosText-VariableFont_wght.ttf") format("truetype");
+}
+
+:root {
+  /* -------------------------------------------------------------------------
+     Brand & Primary palette — FIREFLY (the Waterplan blue)
+     The signature brand color. Use 600 for primary actions, 700 for primary
+     text/headings on light surfaces, 50/100 for tinted backgrounds.
+     ------------------------------------------------------------------------- */
+  --firefly-25:  #F0FDFF;
+  --firefly-50:  #EBF6FA;
+  --firefly-100: #D6ECF4;
+  --firefly-200: #AED9E9;
+  --firefly-300: #86C6DE;
+  --firefly-400: #5EB4D3;
+  --firefly-500: #35A1C9;
+  --firefly-600: #2B81A0; /* primary action */
+  --firefly-700: #206078; /* primary text on light */
+  --firefly-800: #154050;
+  --firefly-900: #0F2D38;
+
+  /* Neutral / Gray scale */
+  --gray-25:  #FAFAFA;
+  --gray-50:  #EEEFF0;
+  --gray-100: #DADBDE;
+  --gray-200: #C6C7CC;
+  --gray-300: #AAABB1;
+  --gray-400: #96979F;
+  --gray-500: #808288;
+  --gray-600: #6A6C72;
+  --gray-700: #55575B;
+  --gray-800: #3F4144;
+  --gray-900: #2A2B2D;
+
+  --white: #FDFDFD;
+  --black: #1E1E1E;
+
+  /* Platform-blue surfaces — the cool washes used behind the app shell */
+  --platform-bg:        #F3F5F8; /* main app background */
+  --subnav-bg:          #E9EEF7; /* sub-navigation, secondary panels */
+  --table-headers:      #F5F7FA;
+  --sidebar:            #D8E8FA;
+
+  /* -------------------------------------------------------------------------
+     Feedback — Error / Warning / Success
+     Use 50 for tinted backgrounds, 500/600 for icons & solid badges, 700 for text on tint.
+     ------------------------------------------------------------------------- */
+  --error-25:  #FFFAFA;
+  --error-50:  #FEF3F2;
+  --error-100: #FEE4E2;
+  --error-200: #FECDC9;
+  --error-300: #FDA19B;
+  --error-400: #F97066;
+  --error-500: #F04438;
+  --error-600: #D92D20;
+  --error-700: #B32318;
+  --error-800: #912018;
+  --error-900: #7A271A;
+
+  --warning-25:  #FFFCF5;
+  --warning-50:  #FFFAEB;
+  --warning-100: #FEF0C7;
+  --warning-200: #FEDF89;
+  --warning-300: #FEC84B;
+  --warning-400: #FDB022;
+  --warning-500: #F79009;
+  --warning-600: #DC6803;
+  --warning-700: #B54708;
+  --warning-800: #93370D;
+  --warning-900: #7A2E0E;
+
+  --success-25:  #F6FEF9;
+  --success-50:  #ECFDF3;
+  --success-100: #D1FADF;
+  --success-200: #A6F4C5;
+  --success-300: #6CE9A6;
+  --success-400: #32D583;
+  --success-500: #12B76A;
+  --success-600: #039855;
+  --success-700: #027A48;
+  --success-800: #05603A;
+  --success-900: #054F31;
+
+  /* -------------------------------------------------------------------------
+     Secondary / Categorical palette
+     For chart series, tags, illustrations. Don't reach for these for primary UI.
+     ------------------------------------------------------------------------- */
+  --purple-50:    #F4F3FF;  --purple-500:    #7A5AF8;  --purple-600: #6938EF;  --purple-700: #5925DC;
+  --orange-50:    #FFF6ED;  --orange-500:    #FB6514;  --orange-600: #EC4A0A;  --orange-700: #C4320A;
+  --saffron-50:   #FBF4D2;  --saffron-500:   #BDA43D;  --saffron-600: #947F2C; --saffron-700: #806D25;
+  --turquoise-50: #D6F8FC;  --turquoise-500: #87CAD1;  --turquoise-600: #6CA2A8; --turquoise-700: #50848A;
+  --blue-50:      #D8E3FA;  --blue-500:      #4077E8;  --blue-600: #396BD1;    --blue-700: #2C53A2;
+  --jungle-50:    #DCF7F0;  --jungle-500:    #2DD1A9;  --jungle-600: #25AE8D;  --jungle-700: #1E8B71;
+  --pink-50:      #F8DDF4;  --pink-500:      #EC90DF;  --pink-600: #D481C9;    --pink-700: #BD72B2;
+
+  /* -------------------------------------------------------------------------
+     Risk-score scales (water risk visualizations)
+     RISK_SCORE: the canonical 5-step diverging risk scale used across maps,
+     matrices and tables. Numbered 1 (Low) → 5 (High).
+     ------------------------------------------------------------------------- */
+  --risk-1: #8FC78F; /* Low */
+  --risk-2: #C3E8C3; /* Med-Low */
+  --risk-3: #F4DDB1; /* Medium */
+  --risk-4: #C85246; /* Med-High */
+  --risk-5: #8C232D; /* High */
+
+  /* WRI Aqueduct scale — for sources flagged as Aqueduct data */
+  --aqueduct-1: #FFFFA6;
+  --aqueduct-2: #FBE74D;
+  --aqueduct-3: #F19E38;
+  --aqueduct-4: #EA3A24;
+  --aqueduct-5: #8C1A11;
+
+  /* Monochromatic blue 5-step (alt risk visualization) */
+  --mono-1: #B8EDF2; --mono-2: #8ADDE5; --mono-3: #396BD1; --mono-4: #203B74; --mono-5: #132445;
+
+  /* -------------------------------------------------------------------------
+     Semantic aliases
+     ------------------------------------------------------------------------- */
+  --color-bg-app:       var(--platform-bg);
+  --color-bg-surface:   var(--white);
+  --color-bg-subtle:    var(--gray-25);
+  --color-bg-muted:     var(--gray-50);
+  --color-bg-subnav:    var(--subnav-bg);
+  --color-bg-tinted:    var(--firefly-50);
+
+  --color-text-primary:    var(--gray-900);
+  --color-text-secondary:  var(--gray-700);
+  --color-text-muted:      var(--gray-500);
+  --color-text-disabled:   var(--gray-300);
+  --color-text-on-brand:   var(--white);
+  --color-text-brand:      var(--firefly-700);
+  --color-text-link:       var(--firefly-600);
+
+  --color-border-subtle:  var(--gray-100);
+  --color-border-default: var(--gray-200);
+  --color-border-strong:  var(--gray-300);
+  --color-border-brand:   var(--firefly-600);
+
+  --color-action-primary:        var(--firefly-600);
+  --color-action-primary-hover:  var(--firefly-500);
+  --color-action-primary-active: var(--firefly-700);
+
+  /* -------------------------------------------------------------------------
+     Typography — Inter only. Tabular numbers for data-dense tables.
+     Mirrors SEASTEM_FONTS exactly.
+     ------------------------------------------------------------------------- */
+  --font-sans:    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Golos Text", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Headings */
+  --fs-h-lg: 3rem;     --lh-h-lg: 1.25;   /* 48 / 60 — page hero */
+  --fs-h-md: 2.25rem;  --lh-h-md: 1.223;  /* 36 / 44 — page title */
+  --fs-h-sm: 1.875rem; --lh-h-sm: 1.267;  /* 30 / 38 — section */
+  --fs-h-xs: 1.5rem;   --lh-h-xs: 1.334;  /* 24 / 32 — sub-section */
+
+  /* Text */
+  --fs-t-xl:  1.25rem;  --lh-t-xl:  1.5;  /* 20 — large body / lead */
+  --fs-t-lg:  1.125rem; --lh-t-lg:  1.556;/* 18 — body emphasis */
+  --fs-t-md:  1rem;     --lh-t-md:  1.5;  /* 16 — body */
+  --fs-t-sm:  0.875rem; --lh-t-sm:  1.43; /* 14 — UI / dense */
+  --fs-t-xs:  0.75rem;  --lh-t-xs:  1.5;  /* 12 — captions, table cells */
+  --fs-t-xxs: 0.65rem;  --lh-t-xxs: 1.5;  /* 10.4 — micro labels */
+
+  --fw-regular:  400;
+  --fw-medium:   500;
+  --fw-semibold: 600;
+  --fw-bold:     700;
+
+  /* -------------------------------------------------------------------------
+     Spacing / Radius / Elevation
+     The codebase uses base 2 × coefficient 3 = 6px default radius.
+     ------------------------------------------------------------------------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;   /* default — Antd controls */
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --radius-pill: 999px;
+
+  --shadow-xs:  0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+  --shadow-sm:  0px 1px 2px 0px rgba(16, 24, 40, 0.06), 0px 1px 3px 0px rgba(16, 24, 40, 0.10);
+  --shadow-md:  0px 2px 4px -2px rgba(16, 24, 40, 0.06), 0px 4px 8px -2px rgba(16, 24, 40, 0.10);
+  --shadow-lg:  0px 4px 6px -2px rgba(16, 24, 40, 0.03), 0px 12px 16px -4px rgba(16, 24, 40, 0.08);
+  --shadow-xl:  0px 8px 8px -4px rgba(16, 24, 40, 0.03), 0px 20px 24px -4px rgba(16, 24, 40, 0.08);
+  --shadow-2xl: 0px 24px 48px -12px rgba(16, 24, 40, 0.18);
+  --shadow-3xl: 0px 32px 64px -12px rgba(16, 24, 40, 0.14);
+}
+
+/* =========================================================================
+   Base resets / defaults
+   ========================================================================= */
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  color: var(--color-text-primary);
+  background: var(--color-bg-app);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-optical-sizing: auto;
+}
+body { font-feature-settings: "ss01", "cv11"; } /* Inter modern numerals */
+
+/* Tabular numbers utility — use on tables, KPI tiles, score columns */
+.tnum { font-variant-numeric: tabular-nums; }
+
+/* =========================================================================
+   Type utilities (mirror SEASTEM_FONTS exactly)
+   ========================================================================= */
+.h-lg { font-family: var(--font-display); font-size: var(--fs-h-lg); line-height: var(--lh-h-lg); font-weight: var(--fw-semibold); letter-spacing: -0.02em; }
+.h-md { font-family: var(--font-display); font-size: var(--fs-h-md); line-height: var(--lh-h-md); font-weight: var(--fw-semibold); letter-spacing: -0.015em; }
+.h-sm { font-family: var(--font-display); font-size: var(--fs-h-sm); line-height: var(--lh-h-sm); font-weight: var(--fw-semibold); letter-spacing: -0.01em; }
+.h-xs { font-family: var(--font-display); font-size: var(--fs-h-xs); line-height: var(--lh-h-xs); font-weight: var(--fw-semibold); letter-spacing: -0.005em; }
+.font-display { font-family: var(--font-display); }
+
+.t-xl  { font-size: var(--fs-t-xl);  line-height: var(--lh-t-xl); }
+.t-lg  { font-size: var(--fs-t-lg);  line-height: var(--lh-t-lg); }
+.t-md  { font-size: var(--fs-t-md);  line-height: var(--lh-t-md); }
+.t-sm  { font-size: var(--fs-t-sm);  line-height: var(--lh-t-sm); }
+.t-xs  { font-size: var(--fs-t-xs);  line-height: var(--lh-t-xs); }
+.t-xxs { font-size: var(--fs-t-xxs); line-height: var(--lh-t-xxs); }
+
+.fw-r { font-weight: var(--fw-regular); }
+.fw-m { font-weight: var(--fw-medium); }
+.fw-sb { font-weight: var(--fw-semibold); }
+.fw-b { font-weight: var(--fw-bold); }
+
+.text-muted { color: var(--color-text-muted); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-brand { color: var(--color-text-brand); }
